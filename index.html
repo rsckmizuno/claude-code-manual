@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code 実務マニュアル</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0e0c;
+    --paper: #f5f0e8;
+    --accent: #c8410a;
+    --accent2: #1a4d8f;
+    --green: #1a7a4a;
+    --muted: #8a8070;
+    --rule: #d4c9b4;
+    --highlight: #fff4e0;
+    --highlight2: #e8f4ee;
+    --highlight3: #e8eef8;
+    --serif: 'Noto Serif JP', serif;
+    --sans: 'Noto Sans JP', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.9;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -120px; right: -120px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    border: 1px solid rgba(200,65,10,0.3);
+    animation: spin 30s linear infinite;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 40px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    border: 1px solid rgba(200,65,10,0.15);
+    animation: spin 20s linear infinite reverse;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .cover-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s ease forwards;
+  }
+  .cover h1 {
+    font-family: var(--serif);
+    font-size: clamp(36px, 5.5vw, 68px);
+    font-weight: 900;
+    line-height: 1.12;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s ease forwards;
+  }
+  .cover h1 span { color: var(--accent); }
+  .cover-sub {
+    font-size: 16px;
+    color: rgba(245,240,232,0.6);
+    max-width: 560px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s ease forwards;
+    line-height: 1.8;
+  }
+  .cover-meta {
+    margin-top: 60px;
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.8s ease forwards;
+  }
+  .cover-meta-item { font-size: 12px; color: rgba(245,240,232,0.45); letter-spacing: 0.08em; }
+  .cover-meta-item strong { display: block; font-size: 14px; color: var(--paper); font-weight: 500; margin-bottom: 2px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── LAYOUT ── */
+  .wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* ── TOC ── */
+  .toc {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 36px;
+    margin: 52px 0 0;
+  }
+  .toc-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: block;
+  }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc ol li {
+    counter-increment: toc;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .toc ol li:last-child { border-bottom: none; }
+  .toc ol li::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .toc a { color: var(--ink); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc .toc-sub {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header { padding: 80px 0 0; }
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .section-header h2 {
+    font-family: var(--serif);
+    font-size: clamp(24px, 3.2vw, 36px);
+    font-weight: 900;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  .section-header .lead {
+    margin-top: 16px;
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 680px;
+    line-height: 1.85;
+  }
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 28px 0 0;
+  }
+
+  .content { margin-top: 48px; }
+
+  /* ── SUBSECTION ── */
+  .subsection {
+    margin-bottom: 56px;
+  }
+  .subsection-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--rule);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .subsection-title .badge {
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+    flex-shrink: 0;
+  }
+  .subsection-title .badge.blue { background: var(--accent2); }
+  .subsection-title .badge.green { background: var(--green); }
+
+  /* ── COMPARE ── */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .compare-card {
+    border-radius: 10px;
+    padding: 28px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(15,14,12,0.06);
+  }
+  .compare-card.left { border-top: 3px solid #bbb; }
+  .compare-card.right { border-top: 3px solid var(--accent); }
+  .compare-card .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .compare-card.left .tag { color: #999; }
+  .compare-card.right .tag { color: var(--accent); }
+  .compare-card h4 { font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .compare-card ul { list-style: none; }
+  .compare-card ul li {
+    font-size: 13px;
+    line-height: 1.7;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--rule);
+    color: #444;
+  }
+  .compare-card ul li:last-child { border-bottom: none; }
+  .compare-card ul li::before { content: '→ '; color: var(--muted); }
+
+  /* ── STAT ROW ── */
+  .stat-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .stat {
+    flex: 1;
+    min-width: 160px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 10px;
+    padding: 28px 24px;
+  }
+  .stat .val {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--accent);
+    display: block;
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .stat .label { font-size: 12px; color: rgba(245,240,232,0.6); line-height: 1.6; }
+
+  /* ── HIGHLIGHT BOXES ── */
+  .box {
+    border-radius: 8px;
+    padding: 22px 26px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.85;
+  }
+  .box-yellow { background: var(--highlight); border: 1px solid #e8d5a0; color: #5a4a20; }
+  .box-green  { background: var(--highlight2); border: 1px solid #a8d8be; color: #1a4a30; }
+  .box-blue   { background: var(--highlight3); border: 1px solid #b0c8e8; color: #1a2a5a; }
+  .box strong { font-weight: 700; }
+  .box-yellow strong { color: var(--accent); }
+  .box-green strong  { color: var(--green); }
+  .box-blue strong   { color: var(--accent2); }
+
+  /* ── DETAILED STEPS ── */
+  .step-block {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(15,14,12,0.06);
+  }
+  .step-header {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+  .step-number {
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-number.blue { background: var(--accent2); }
+  .step-number.green { background: var(--green); }
+  .step-title-area {
+    padding: 18px 24px;
+    flex: 1;
+  }
+  .step-title-area h4 {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .step-title-area .step-tagline {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .step-body {
+    padding: 0 24px 24px 24px;
+  }
+  .step-body p {
+    font-size: 14px;
+    color: #3d3a34;
+    line-height: 1.85;
+    margin-bottom: 12px;
+  }
+  .step-body p:last-child { margin-bottom: 0; }
+
+  /* サブステップ（番号付き小手順） */
+  .substeps {
+    list-style: none;
+    counter-reset: substep;
+    margin: 12px 0;
+  }
+  .substeps li {
+    counter-increment: substep;
+    font-size: 13.5px;
+    color: #3d3a34;
+    line-height: 1.8;
+    padding: 8px 0 8px 36px;
+    border-bottom: 1px dashed var(--rule);
+    position: relative;
+  }
+  .substeps li:last-child { border-bottom: none; }
+  .substeps li::before {
+    content: counter(substep);
+    position: absolute;
+    left: 0;
+    top: 9px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* セリフ吹き出し */
+  .speech {
+    background: #f0f8f4;
+    border-left: 4px solid var(--green);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 13.5px;
+    color: #1a3a28;
+    font-style: italic;
+    position: relative;
+  }
+  .speech::before {
+    content: '💬 入力例：';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--green);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .speech code {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-style: normal;
+    background: rgba(26,122,74,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* 注意・ポイントラベル付きメモ */
+  .memo {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.75;
+    padding: 10px 0;
+  }
+  .memo .label-tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: 2px;
+  }
+  .memo .label-tag.caution { background: #fce8e0; color: var(--accent); }
+  .memo .label-tag.point   { background: #e0eaf8; color: var(--accent2); }
+  .memo .label-tag.ok      { background: #e0f0e8; color: var(--green); }
+
+  /* ── AGENT GRID ── */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .agent-card {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 10px;
+    padding: 22px 18px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(200,65,10,0.12);
+  }
+  .agent-card .num {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .agent-card .role {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--paper);
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .agent-card .desc {
+    font-size: 11px;
+    color: rgba(245,240,232,0.5);
+    line-height: 1.5;
+  }
+
+  /* ── CARD（シンプルカード） ── */
+  .card {
+    background: #fff;
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 26px 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(15,14,12,0.06);
+  }
+  .card.blue { border-left-color: var(--accent2); }
+  .card.green { border-left-color: var(--green); }
+  .card h3 {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .card p { font-size: 14px; line-height: 1.85; color: #3d3a34; }
+  .card ul { list-style: none; margin-top: 10px; }
+  .card ul li { font-size: 13.5px; padding: 5px 0; border-bottom: 1px dashed var(--rule); color: #3d3a34; }
+  .card ul li:last-child { border-bottom: none; }
+  .card ul li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+
+  /* ── GOOD / BAD ── */
+  .example-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .example-card {
+    border-radius: 8px;
+    padding: 20px 22px;
+    font-size: 13.5px;
+    line-height: 1.75;
+  }
+  .example-card.good { background: #e8f4ee; border: 1px solid #a8d8be; color: #1a3a28; }
+  .example-card.bad  { background: #fce8e0; border: 1px solid #f0b8a0; color: #4a1a08; }
+  .example-card .ex-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .example-card.good .ex-label { color: var(--green); }
+  .example-card.bad  .ex-label { color: var(--accent); }
+  .example-card p { margin-bottom: 8px; }
+  .example-card p:last-child { margin-bottom: 0; }
+  .example-card .why {
+    font-size: 12px;
+    opacity: 0.7;
+    font-style: italic;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(0,0,0,0.15);
+  }
+
+  /* ── FORMULA BOX ── */
+  .formula {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin: 20px 0;
+    text-align: center;
+  }
+  .formula .formula-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: rgba(245,240,232,0.4);
+    margin-bottom: 16px;
+    display: block;
+  }
+  .formula .formula-text {
+    font-family: var(--serif);
+    font-size: clamp(15px, 2vw, 20px);
+    font-weight: 700;
+    line-height: 1.7;
+  }
+  .formula .formula-text span { color: var(--accent); }
+
+  /* ── TIPS GRID ── */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+  .tip {
+    background: #fff;
+    border-radius: 10px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 12px rgba(15,14,12,0.06);
+    position: relative;
+  }
+  .tip::after {
+    content: attr(data-icon);
+    position: absolute;
+    top: 16px; right: 16px;
+    font-size: 22px;
+    opacity: 0.55;
+  }
+  .tip h4 { font-family: var(--serif); font-size: 15px; font-weight: 700; margin-bottom: 8px; padding-right: 32px; }
+  .tip p { font-size: 13px; color: #555; line-height: 1.75; }
+
+  /* ── CLOSING ── */
+  .closing {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 60px;
+    margin-top: 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .closing::before {
+    content: '"';
+    position: absolute;
+    top: -30px; left: 40px;
+    font-family: var(--serif);
+    font-size: 200px;
+    color: rgba(200,65,10,0.1);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .closing blockquote {
+    font-family: var(--serif);
+    font-size: clamp(18px, 2.3vw, 28px);
+    font-weight: 700;
+    line-height: 1.6;
+    max-width: 660px;
+    margin: 0 auto 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .closing blockquote span { color: var(--accent); }
+  .closing .closing-note {
+    font-size: 13px;
+    color: rgba(245,240,232,0.45);
+    margin-top: 10px;
+  }
+  .closing .closing-body {
+    font-size: 14px;
+    color: rgba(245,240,232,0.6);
+    max-width: 500px;
+    margin: 32px auto 0;
+    line-height: 1.85;
+  }
+
+  .spacer { height: 80px; }
+
+  @media (max-width: 640px) {
+    .cover { padding: 60px 24px; }
+    .wrapper { padding: 0 20px; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .example-grid { grid-template-columns: 1fr; }
+    .closing { padding: 60px 24px; }
+    .step-number { min-width: 48px; font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ COVER ══════════ -->
+<div class="cover">
+  <div class="cover-label">実務マニュアル v2 — チーム共有版</div>
+  <h1>Claude Code で<br><span>AIが経営する</span><br>時代へ</h1>
+  <p class="cover-sub">「AIに質問する」から「AIに仕事をさせる」へ。<br>AIを触ったことがない方でも今日から使えるClaude Code完全ガイド。</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><strong>対象者</strong>AI初心者・非エンジニア・経営者</div>
+    <div class="cover-meta-item"><strong>所要時間</strong>約20分で読了</div>
+    <div class="cover-meta-item"><strong>目的</strong>明日から実務で使えるAI活用スキル</div>
+  </div>
+</div>
+
+<!-- ══════════ TOC ══════════ -->
+<div class="wrapper">
+  <div class="toc">
+    <span class="toc-label">目次 — Contents</span>
+    <ol>
+      <li>
+        <div>
+          <a href="#sec1">Claude Codeとは？ChatGPTとの決定的な違い</a>
+          <span class="toc-sub">「相談相手AI」から「実行するAI」へ</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <a href="#sec2">5体のAIエージェントによる分業体制</a>
+          <span class="toc-sub">議事録を渡すだけで企画書が3時間で完成する仕組み</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <a href="#sec3">Skills（スキルズ）機能で業務を自動化する</a>
+          <span class="toc-sub">一度うまくいった作業を「型」として保存する</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <a href="#sec4">3つの運用ポイント</a>
+          <span class="toc-sub">フォルダ管理・ツール連携・並列処理</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <a href="#sec5">人間に求められる「言語化力」</a>
+          <span class="toc-sub">AIと仕事する時代に必要な唯一のスキル</span>
+        </div>
+      </li>
+    </ol>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SEC 1 — Claude Codeとは
+══════════════════════════════════════ -->
+<div class="wrapper" id="sec1">
+  <div class="section-header">
+    <span class="section-num">Section 01</span>
+    <h2>Claude Codeとは？<br>ChatGPTとの決定的な違い</h2>
+    <p class="lead">まず「ChatGPTと何が違うの？」という疑問を解消します。この違いを腑に落とすだけで、Claude Codeの使い方が自然と分かるようになります。</p>
+    <hr class="divider">
+  </div>
+
+  <div class="content">
+
+    <!-- 1-1 比喩で理解 -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">基本概念</span>
+        「優秀な相談相手」と「優秀な部下」の違い
+      </div>
+
+      <div class="compare-grid">
+        <div class="compare-card left">
+          <span class="tag">従来型AI / 相談相手モデル</span>
+          <h4>ChatGPT</h4>
+          <ul>
+            <li>ヒント・文章案を提案してくれる</li>
+            <li>答えを出したら終わり</li>
+            <li>コピペして自分で実行する必要がある</li>
+            <li>ツールの切り替えは人間がやる</li>
+            <li>「調べてくれる」が「動いてくれない」</li>
+          </ul>
+        </div>
+        <div class="compare-card right">
+          <span class="tag">次世代AI / 実行エージェントモデル</span>
+          <h4>Claude Code</h4>
+          <ul>
+            <li>自らファイルを作成・保存・送信する</li>
+            <li>指示したタスクを最後まで完遂する</li>
+            <li>他のツールと自動で連携する</li>
+            <li>複数工程を自律的にこなす</li>
+            <li>「動いてくれる」優秀な部下</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box box-yellow">
+        💡 <strong>たとえ話で理解：</strong><br>
+        ChatGPTは「優秀なコンサルタント」。相談すると良いアドバイスをくれますが、実行は自分がやります。<br>
+        Claude Codeは「優秀な社員」。指示を出すと自分でパソコンを操作し、調べて、ファイルを作り、送信まで完了させます。
+      </div>
+    </div>
+
+    <!-- 1-2 UIについて -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">はじめ方</span>
+        難しそうに見えるけど、実は誰でも使える
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number">!</div>
+          <div class="step-title-area">
+            <h4>「黒い画面が必要」は昔の話</h4>
+            <div class="step-tagline">今は普通のチャット画面から使えます</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>以前はエンジニアが「ターミナル（黒い画面にコマンドを打ち込む画面）」を使う必要がありましたが、現在はLINEやSlackのようなチャット画面から日本語で指示するだけで使えます。</p>
+          <div class="memo">
+            <span class="label-tag ok">OK</span>
+            <span>「プログラミングを知らなくても使える」が今のClaude Codeの前提です。必要なのは<strong>日本語で指示を出す力だけ</strong>です。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <span class="val">2日 → 3時間</span>
+          <span class="label">40ページ規模の企画書・制作資料の作成時間が劇的に短縮された実例</span>
+        </div>
+        <div class="stat">
+          <span class="val">コード不要</span>
+          <span class="label">プログラミング知識ゼロでOK。日本語チャットだけで操作できる</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SEC 2 — 5体のエージェント
+══════════════════════════════════════ -->
+<div class="wrapper" id="sec2">
+  <div class="section-header">
+    <span class="section-num">Section 02</span>
+    <h2>5体のAIエージェントによる<br>分業体制</h2>
+    <p class="lead">Claude Codeの最大の特徴は、複数のAIに役割を分担させられること。会議の議事録を渡すだけで、5体のAIが連携して企画書を自動で作り上げます。</p>
+    <hr class="divider">
+  </div>
+
+  <div class="content">
+
+    <!-- 2-1 なぜ分業するのか -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">仕組みを理解</span>
+        なぜ1体ではなく5体に分けるのか？
+      </div>
+
+      <div class="box box-blue">
+        🧠 <strong>AIの「記憶容量」には上限がある：</strong><br>
+        AIには一度に覚えられる情報量（コンテキスト）に限界があります。1体に全部やらせると、途中で内容を「忘れて」精度が下がります。<br>
+        <br>
+        → だから<strong>役割を細分化して、それぞれの専門AIに担当させる</strong>ことで、精度を高く保てます。<br>
+        これは人間のチームと同じです。1人に全部やらせず、得意な人に分担させるほうが良い仕事になります。
+      </div>
+
+      <div class="agent-grid">
+        <div class="agent-card"><span class="num">01</span><div class="role">論点分析AI</div><div class="desc">議事録を読んで課題・論点を整理する</div></div>
+        <div class="agent-card"><span class="num">02</span><div class="role">市場リサーチAI</div><div class="desc">競合・トレンド・データを調査する</div></div>
+        <div class="agent-card"><span class="num">03</span><div class="role">戦略考案AI</div><div class="desc">リサーチをもとに戦略オプションを提案する</div></div>
+        <div class="agent-card"><span class="num">04</span><div class="role">批判的レビューAI</div><div class="desc">戦略の穴・リスクを厳しくチェックする</div></div>
+        <div class="agent-card"><span class="num">05</span><div class="role">レポート作成AI</div><div class="desc">全員の成果を統合して最終文書を生成する</div></div>
+      </div>
+    </div>
+
+    <!-- 2-2 実際の手順 -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge green">実践手順</span>
+        議事録 → 企画書の作り方（ステップバイステップ）
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">1</div>
+          <div class="step-title-area">
+            <h4>会議の議事録を用意する</h4>
+            <div class="step-tagline">テキストデータになっていれば何でもOK</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>会議のメモ、録音の文字起こし、Notionのメモなど、テキスト形式になっているものを用意します。</p>
+          <ul class="substeps">
+            <li>Wordファイル・テキストファイル・メモ帳のテキストなど、文字が書いてあるものならOKです</li>
+            <li>手書きメモの場合は、スマホで写真を撮ってGoogleドキュメントに貼り付けるとテキスト化できます（Googleドキュメント → 挿入 → 画像からテキスト）</li>
+            <li>録音がある場合はClaude Codeに「この音声を文字起こしして」とお願いすることもできます</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">2</div>
+          <div class="step-title-area">
+            <h4>Claude Codeを開いてチャット画面に貼り付ける</h4>
+            <div class="step-tagline">LINEに文章を送る感覚でOK</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>Claude Codeのチャット画面を開き、議事録のテキストをコピー＆ペーストします。</p>
+          <ul class="substeps">
+            <li>claude.ai にアクセスしてアカウントを作成・ログインします（Googleアカウントでサインインできます）</li>
+            <li>「Claude Code」のプランを選択します（有料プランが必要です）</li>
+            <li>チャット欄に議事録のテキストをそのまま貼り付けます</li>
+          </ul>
+          <div class="memo">
+            <span class="label-tag point">POINT</span>
+            <span>ファイルをそのままドラッグ＆ドロップで添付することも可能です。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">3</div>
+          <div class="step-title-area">
+            <h4>指示文（プロンプト）を入力して送信する</h4>
+            <div class="step-tagline">この「言い方」が成果を左右します</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>議事録を貼り付けた後、以下のような指示文を追加して送信します。</p>
+          <div class="speech">
+            上記は先週の営業会議の議事録です。<br>
+            以下の役割を持つ5つのAIエージェントを順番に動かして、来月の経営会議で使える企画書（A4・10ページ程度）を作成してください。<br><br>
+            ① 論点分析：課題と論点を整理<br>
+            ② 市場リサーチ：競合・業界トレンドを調査<br>
+            ③ 戦略考案：3つの戦略オプションを提案<br>
+            ④ 批判的レビュー：各戦略のリスクを洗い出し<br>
+            ⑤ 最終レポート：上記をまとめて企画書を作成
+          </div>
+          <div class="memo">
+            <span class="label-tag caution">注意</span>
+            <span>役割を番号で明示することがポイントです。曖昧な指示だとAIが役割を省略することがあります。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">4</div>
+          <div class="step-title-area">
+            <h4>AIが自動で処理するのを待つ</h4>
+            <div class="step-tagline">途中で操作する必要はありません</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>送信後、Claude Codeが5つの役割を順番に実行し始めます。各AIが処理している様子が画面に表示されます。</p>
+          <ul class="substeps">
+            <li>処理中は画面に「考え中...」などの表示が出ます。そのまま待ちましょう</li>
+            <li>他のウィンドウで別の仕事をしながら待っても大丈夫です</li>
+            <li>40ページ規模の資料なら、おおよそ1〜3時間で完成します</li>
+          </ul>
+          <div class="memo">
+            <span class="label-tag ok">OK</span>
+            <span>途中の処理が見えるので、方向性が違う場合は「ちょっと待って、③の戦略は〇〇の方向で考えて」と途中で修正指示を出すことも可能です。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">5</div>
+          <div class="step-title-area">
+            <h4>完成した企画書を確認・修正する</h4>
+            <div class="step-tagline">人間の判断・確認が最後の仕事</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>企画書が完成したら、内容を確認します。AIはあくまでも「たたき台」を作るので、最後は人間が確認・修正します。</p>
+          <ul class="substeps">
+            <li>数字・固有名詞・事実確認は必ず人間が目視でチェックします</li>
+            <li>修正したい箇所は「3ページ目の市場規模の数値を2024年の最新データに差し替えて」など具体的に指示します</li>
+            <li>Word・PDFへの変換も「Wordファイルとして書き出して」と指示するだけで完了します</li>
+          </ul>
+          <div class="memo">
+            <span class="label-tag caution">重要</span>
+            <span>AIが出したデータや数値は<strong>必ず一次情報で確認</strong>してください。AIは古いデータや誤った情報を自信満々で出すことがあります。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SEC 3 — Skills機能
+══════════════════════════════════════ -->
+<div class="wrapper" id="sec3">
+  <div class="section-header">
+    <span class="section-num">Section 03</span>
+    <h2>Skills（スキルズ）機能で<br>業務を自動化する</h2>
+    <p class="lead">うまくいった作業の手順をAIに「型」として記憶させる機能です。次回からは短い言葉だけで同じ品質の作業を再現できます。プログラミングは一切不要です。</p>
+    <hr class="divider">
+  </div>
+
+  <div class="content">
+
+    <!-- 3-1 Skillsとは -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">仕組みを理解</span>
+        「スキル」って何？マクロ記録に近い概念
+      </div>
+
+      <div class="box box-yellow">
+        📌 <strong>Excelのマクロをイメージしてください：</strong><br>
+        Excelでは「毎回同じ操作をマクロとして記録」しておくと、次回はボタン1つで同じことができます。<br>
+        Skillsはそれと同じです。AIが実行した手順を「スキル」として保存しておくと、次回は短い言葉だけで再現できます。<br>
+        <br>
+        しかも<strong>コードを書く必要が一切ありません</strong>。「これをスキル化して」と言うだけでAIが自動で設定してくれます。
+      </div>
+    </div>
+
+    <!-- 3-2 詳細ステップ -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge green">実践手順</span>
+        スキルを作るまでの具体的な流れ
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">1</div>
+          <div class="step-title-area">
+            <h4>まず普通に作業を指示してみる</h4>
+            <div class="step-tagline">最初は「試し」のつもりで気軽に</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>スキル化を意識せず、まずは普通に仕事を頼んでみます。</p>
+          <div class="speech">
+            この資料にグラフと図解を追加して、経営者向けに見やすく整えてください。フォントはゴシック体で統一、カラーはブランドカラーの#1a4d8fを使ってください。
+          </div>
+          <ul class="substeps">
+            <li>指示は具体的なほど良い結果が得られます（「見やすく」より「フォント・色・グラフ形式を指定」）</li>
+            <li>最初の1〜2回は結果を確認しながら「もう少し大きいフォントに」など調整しましょう</li>
+            <li>「これだ！」という仕上がりになるまで何度か修正をかけます</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">2</div>
+          <div class="step-title-area">
+            <h4>納得できたらスキル化を指示する</h4>
+            <div class="step-tagline">この一言だけでOK</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>完成した作業の品質に満足したら、すぐにスキル化を指示します。</p>
+          <div class="speech">
+            この作業の手順をスキルとして保存しておいてください。次回から「資料を整える」と言ったら、同じフォーマットで整えてください。
+          </div>
+          <ul class="substeps">
+            <li>Claude Codeが自動で手順を分析してスキルとして保存します（コード不要）</li>
+            <li>「スキル名」を指定しておくと後で呼び出しやすいです（例：「経営者向け資料フォーマット」）</li>
+            <li>保存が完了すると「スキルとして保存しました」と表示されます</li>
+          </ul>
+          <div class="memo">
+            <span class="label-tag point">POINT</span>
+            <span>スキルには「例外処理」も教えられます。「図が入ってない場合はシンプルにテキストだけで整えて」などの条件も追加しておくとより万能になります。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">3</div>
+          <div class="step-title-area">
+            <h4>次回から短い言葉だけで再現する</h4>
+            <div class="step-tagline">AIが空気を読んで動いてくれる</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>スキルを保存した後は、次回から簡単な言葉で同じ品質の作業が再現されます。</p>
+          <div class="speech">
+            この資料、さっきのスキルで整えておいて。
+          </div>
+          <ul class="substeps">
+            <li>AIが保存した手順を思い出し、同じフォーマット・ルールで作業を実行します</li>
+            <li>1回目に20分かけて細かく指示した内容が、次回から3秒の指示で完了します</li>
+            <li>スキルは蓄積するほど便利になるため、うまくいった作業はすぐスキル化する習慣をつけましょう</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number green">4</div>
+          <div class="step-title-area">
+            <h4>スキルを改善・更新する</h4>
+            <div class="step-tagline">育てるほど賢くなる</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>スキルは一度作って終わりではなく、使いながら改善できます。</p>
+          <ul class="substeps">
+            <li>使ってみて「少し違う」と感じたら「さっきのスキルに〇〇のルールも追加して」と指示するだけで更新できます</li>
+            <li>季節や状況に合わせて「Q4は数字中心のレイアウトに変えて」など条件分岐も追加できます</li>
+            <li>チームメンバーにスキルを共有する場合は「このスキルの設定をテキストで書き出して」と指示すると共有できます</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3-3 スキル化の例 -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge blue">活用例</span>
+        まずこれをスキル化しよう — すぐ使えるリスト
+      </div>
+
+      <div class="card green">
+        <h3>🗂 スキル化しておきたい業務トップ7</h3>
+        <ul>
+          <li><strong>週次レポート作成</strong>：KPIデータを貼り付けるだけで定型フォーマットに整形</li>
+          <li><strong>議事録の論点整理</strong>：会議メモをアクションアイテム形式に変換</li>
+          <li><strong>競合調査フォーマット</strong>：競合名を渡すだけで同じ比較表を自動生成</li>
+          <li><strong>メール文面のトーン調整</strong>：「取引先向け丁寧バージョン」に統一変換</li>
+          <li><strong>朝のタスク優先順位付け</strong>：タスクリストを渡すと重要度×緊急度で並び替え</li>
+          <li><strong>SNS投稿の文体統一</strong>：ブランドトーンに合わせた文体で自動リライト</li>
+          <li><strong>提案書フォーマット適用</strong>：会社の提案書テンプレートに内容を流し込み</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SEC 4 — 3つの運用ポイント
+══════════════════════════════════════ -->
+<div class="wrapper" id="sec4">
+  <div class="section-header">
+    <span class="section-num">Section 04</span>
+    <h2>3つの運用ポイント</h2>
+    <p class="lead">Claude Codeを最大限に活かすための、実務ですぐ使える3つの運用方法を、初めての方でも迷わないよう具体的な手順で解説します。</p>
+    <hr class="divider">
+  </div>
+
+  <div class="content">
+
+    <!-- 運用ポイント① -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">運用① </span>
+        会社の情報をフォルダ構造で整理してアクセス権を渡す
+      </div>
+
+      <div class="box box-blue">
+        📁 <strong>考え方：</strong>Claude Codeを「会社の内情を知っている優秀な社員」にするには、会社の情報へのアクセスを与える必要があります。フォルダを整理してアクセス権を付与するだけで、部門横断的な提案や予算立てができるようになります。
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number blue">1</div>
+          <div class="step-title-area">
+            <h4>フォルダ構造を決める</h4>
+            <div class="step-tagline">会社の組織図をフォルダに置き換えるイメージ</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>Google DriveやOneDriveに以下のようなフォルダ構造を作ります。</p>
+          <ul class="substeps">
+            <li>📂 会社情報 / 01_経営戦略（3ヶ年計画・MVV・KPIなど）</li>
+            <li>📂 会社情報 / 02_マーケティング（顧客データ・競合分析・キャンペーン）</li>
+            <li>📂 会社情報 / 03_セールス（商談履歴・提案書・価格表）</li>
+            <li>📂 会社情報 / 04_財務（予算・実績・コスト構造）</li>
+            <li>📂 会社情報 / 05_人事（組織図・評価基準）</li>
+          </ul>
+          <div class="memo">
+            <span class="label-tag caution">注意</span>
+            <span>機密性の高い情報（個人情報・未公開の財務情報）はフォルダに入れないよう注意してください。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number blue">2</div>
+          <div class="step-title-area">
+            <h4>Claude Codeにフォルダへのアクセスを許可する</h4>
+            <div class="step-tagline">「読んでいいよ」と教える</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>Claude CodeにGoogle DriveやOneDriveとの連携を設定し、上記フォルダへのアクセスを許可します。</p>
+          <ul class="substeps">
+            <li>Claude Codeの設定画面から「ツール連携」または「Integrations」を開きます</li>
+            <li>Google Driveを選択し、Googleアカウントでの連携を承認します</li>
+            <li>アクセスを許可するフォルダを「会社情報」フォルダに指定します</li>
+          </ul>
+          <div class="speech">
+            「会社情報」フォルダの内容を読んで、我々の経営戦略・売上・コスト構造を理解した上で、来期の予算配分案を作成してください。
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number blue">3</div>
+          <div class="step-title-area">
+            <h4>部門横断的な提案を依頼する</h4>
+            <div class="step-tagline">複数部門の情報を統合した判断ができる</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>フォルダを読んだClaude Codeは、各部門の情報を統合した上で回答・提案をします。</p>
+          <ul class="substeps">
+            <li>「マーケ予算を10%削減した場合に売上への影響を試算して」などの複雑な質問に答えられるようになります</li>
+            <li>新規事業の提案時に「今の人員構成・財務状況を踏まえた現実的な計画」を出せます</li>
+            <li>定期的にフォルダの内容を更新することで、常に最新情報をもとに提案してくれます</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 運用ポイント② -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">運用②</span>
+        他のAI・ツールと連携させて「一元管理」する
+      </div>
+
+      <div class="box box-yellow">
+        🔗 <strong>考え方：</strong>今まで「Googleカレンダーを開く→Slackを確認する→Gmailを返信する→資料を作る」と人間がツールを行ったり来たりしていました。Claude Codeを「ハブ（中継点）」にすることで、人間はClaude Codeだけ見ていれば全てのツールを操作できるようになります。
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div class="step-title-area">
+            <h4>連携するツールを設定する</h4>
+            <div class="step-tagline">まず1〜2個から始めるのがおすすめ</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>Claude Codeの設定画面から使用するツールを連携します。最初はよく使う1〜2つから始めましょう。</p>
+          <ul class="substeps">
+            <li>Claude Code設定 →「ツール連携」→ 連携したいサービスを選択</li>
+            <li>各サービスのアカウントでログインして連携を承認するだけです</li>
+            <li>おすすめの最初の連携：①Googleカレンダー ②Gmail（この2つで大幅に楽になります）</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div class="step-title-area">
+            <h4>日本語で「横断的な」指示を出す</h4>
+            <div class="step-tagline">複数ツールをまたぐ作業を1つの指示で完結</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>連携後は、複数のツールをまたぐ作業を1つの指示で依頼できます。</p>
+          <div class="speech">
+            今日のカレンダーを確認して、午後の〇〇社との打ち合わせ前に送るべき準備資料の送付漏れがないかチェックして。もし漏れていたら下書きメールを作って。
+          </div>
+          <ul class="substeps">
+            <li>Claude Codeがカレンダーを確認 → 打ち合わせを特定 → Gmailで過去メールを確認 → 下書き作成まで自動実行します</li>
+            <li>各ツールを切り替える必要がなくなり、認知負荷が大幅に下がります</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:0;">
+        <h3>🔧 連携できる主なツール一覧</h3>
+        <p style="margin-bottom:10px;">Claude Codeが「ハブ」として連携できる代表的なツールです。</p>
+        <ul>
+          <li><strong>Googleカレンダー</strong>：スケジュール確認・登録・リマインド設定</li>
+          <li><strong>Gmail</strong>：メール下書き・送信・分類・返信指示</li>
+          <li><strong>Slack</strong>：メッセージ送信・通知・要約</li>
+          <li><strong>Notion</strong>：ドキュメント作成・整理・データベース更新</li>
+          <li><strong>Google Drive</strong>：ファイル作成・整理・共有</li>
+          <li><strong>他の生成AI</strong>：Gemini・GPT-4などと役割分担して使うことも可能</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 運用ポイント③ -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">運用③</span>
+        複数タブで複数プロジェクトを同時進行する
+      </div>
+
+      <div class="box box-green">
+        ⚡ <strong>考え方：</strong>Claude Codeはタブを複数開くと、それぞれのタブで別々のタスクを同時進行できます。人間は各タブに指示を出したら、AIが処理している間に別の仕事ができます。実質1人で3〜5人分の仕事を回しているような状態になります。
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div class="step-title-area">
+            <h4>タブを複数開いて別々のタスクを割り当てる</h4>
+            <div class="step-tagline">ブラウザのタブを増やすだけ</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>ブラウザで claude.ai の新しいタブを複数開き、それぞれ別の会話を始めます。</p>
+          <ul class="substeps">
+            <li>タブ①：「新商品の企画書を作って」と指示して処理を開始</li>
+            <li>タブ②：「競合A社の最新動向をリサーチして」と指示して処理を開始</li>
+            <li>タブ③：「来週のプレゼン用スライド構成を考えて」と指示して処理を開始</li>
+            <li>それぞれのAIが並列で動くため、3つのタスクが同時進行します</li>
+          </ul>
+          <div class="memo">
+            <span class="label-tag point">POINT</span>
+            <span>タスクを投げたら、そのタブは最小化して別の仕事をしましょう。AIの処理が終わる頃に戻ってくれば効率的です。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-block">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div class="step-title-area">
+            <h4>処理が終わったタブから順に確認・修正する</h4>
+            <div class="step-tagline">マネージャーとして各タブの成果を確認する</div>
+          </div>
+        </div>
+        <div class="step-body">
+          <p>各タブのAIが処理を完了したら、順番に確認して必要な修正指示を追加します。</p>
+          <ul class="substeps">
+            <li>完了したタブに「いいね。ただし〇〇の部分を修正して」と追加指示を出す</li>
+            <li>修正指示を出したら次のタブに移動して、そちらも確認する</li>
+            <li>このループを回すことで、常に複数のプロジェクトが動いている状態を維持できます</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SEC 5 — 言語化力
+══════════════════════════════════════ -->
+<div class="wrapper" id="sec5">
+  <div class="section-header">
+    <span class="section-num">Section 05</span>
+    <h2>人間に求められるのは<br>「言語化力」</h2>
+    <p class="lead">AIエージェントをうまく使いこなせる人とそうでない人の差は、プログラミングの知識でも技術力でもありません。「自分の要求を正確に言葉にする力」だけです。</p>
+    <hr class="divider">
+  </div>
+
+  <div class="content">
+
+    <!-- 5-1 なぜ言語化力なのか -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge">考え方</span>
+        AIマネジメント ＝ 人間マネジメント
+      </div>
+
+      <div class="box box-yellow">
+        💬 <strong>AIへの指示は「部下への指示」と同じです：</strong><br>
+        「いい感じにやっといて」という指示では、優秀な部下でも困ります。<br>
+        「〇〇という目的のために、△△という対象に向けて、□□という形式で作成して」という明確な指示があれば、誰でも動けます。<br>
+        <br>
+        これは人間でもAIでも変わりません。つまり<strong>管理職・経営者ほど、この力が活きる</strong>ツールです。
+      </div>
+
+      <div class="formula">
+        <span class="formula-label">良い指示の公式</span>
+        <div class="formula-text">
+          <span>目的</span>（何のために）　＋　<span>対象</span>（誰に向けて）<br>
+          ＋　<span>制約</span>（どんな条件で）　＋　<span>形式</span>（どんなアウトプットで）
+        </div>
+      </div>
+    </div>
+
+    <!-- 5-2 具体的な例 -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge green">実践</span>
+        良い指示・改善が必要な指示の比較
+      </div>
+
+      <div class="example-grid">
+        <div class="example-card good">
+          <span class="ex-label">✅ 良い指示の例</span>
+          <p>「競合A社・B社・C社と比較した自社の強み・弱みをまとめて、来月の営業会議で使える提案書（A4・4ページ）を作って。ターゲットは40代・製造業の経営者。専門用語は使わずシンプルに」</p>
+          <p class="why">目的・対象・制約・形式がすべて明示されているため、AIが迷わず動ける</p>
+        </div>
+        <div class="example-card bad">
+          <span class="ex-label">❌ 改善が必要な指示の例</span>
+          <p>「いい感じの提案書を作って」</p>
+          <p class="why">目的・対象・制約・形式が全て不明。AIが推測で動くため、期待と大きく外れた結果になりやすい</p>
+        </div>
+      </div>
+
+      <div class="example-grid">
+        <div class="example-card good">
+          <span class="ex-label">✅ 良い修正指示の例</span>
+          <p>「3ページ目のグラフをもっとシンプルにして。データ項目を3つだけに絞って、棒グラフではなく円グラフに変えて」</p>
+          <p class="why">何を・どう変えるかが具体的なので、意図通りに修正される</p>
+        </div>
+        <div class="example-card bad">
+          <span class="ex-label">❌ 改善が必要な修正指示の例</span>
+          <p>「グラフをもっと分かりやすくして」</p>
+          <p class="why">「分かりやすい」の基準が人によって異なる。AIの判断任せになり、さらに複雑になることもある</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5-3 言語化力を鍛えるコツ -->
+    <div class="subsection">
+      <div class="subsection-title">
+        <span class="badge blue">スキルアップ</span>
+        言語化力を鍛える4つのコツ
+      </div>
+
+      <div class="tips-grid">
+        <div class="tip" data-icon="🎯">
+          <h4>① 「何のために」を最初に書く</h4>
+          <p>「〇〇会議で使う」「△△という課題を解決するために」と目的を最初に書くと、AIが全体の方向性を理解しやすくなります。</p>
+        </div>
+        <div class="tip" data-icon="👥">
+          <h4>② 「誰が読む・使う」を明示する</h4>
+          <p>「60代・非IT系の経営者向け」「入社1年目の営業担当向け」など読み手を具体的に伝えると、トーン・用語レベルが自動で調整されます。</p>
+        </div>
+        <div class="tip" data-icon="📏">
+          <h4>③ 分量・形式を数字で指定する</h4>
+          <p>「見やすく」ではなく「A4・3ページ・箇条書き中心」など数字と形式で指定します。数字があると判断基準が明確になります。</p>
+        </div>
+        <div class="tip" data-icon="🚫">
+          <h4>④ 「やってほしくないこと」も伝える</h4>
+          <p>「専門用語は使わないで」「グラフは入れないで」などの禁止事項を明示することで、意図しない方向への暴走を防げます。</p>
+        </div>
+      </div>
+
+      <div class="card blue">
+        <h3>💡 「上手くいかない」と感じたら読み返すチェックリスト</h3>
+        <ul>
+          <li>目的（何のために）を伝えたか？</li>
+          <li>対象（誰向けか）を具体的に書いたか？</li>
+          <li>形式・分量を数字で指定したか？</li>
+          <li>やってほしくないことを明示したか？</li>
+          <li>制約・前提条件（予算・期間・条件）を伝えたか？</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="spacer"></div>
+
+<!-- ══════════ CLOSING ══════════ -->
+<div class="closing">
+  <blockquote>「AIに質問するだけの時代は終わり、<br><span>AIで経営する時代</span>に入りつつある」</blockquote>
+  <p class="closing-note">— 動画より</p>
+  <p class="closing-body">Claude Codeは技術者だけのツールではありません。<br>「言葉で人を動かせる人」こそが、AIを最も使いこなせる時代が来ています。<br>管理職・経営者の方ほど、今すぐ始める価値があります。</p>
+</div>
+
+</body>
+</html>
